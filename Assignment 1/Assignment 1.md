@@ -182,17 +182,126 @@ WHERE i.MovieID = m.MovieID AND i.TapeID = r.TapeID
 
 ```sql
 SELECT s.SupplierName
-FROM Supplier s
-WHERE s.SupplierID NOT IN (
-	SELECT ms.SupplierID
-    FROM MovieSupplier ms, Inverntory i
-    WHERE NOT EXISTS (
-		SELECT *
-        FROM MovieSupplier ms2, Inventory i2
-        WHERE i2.MovieID = ms2.MovieID
-        	AND i2.MovieID = i.movieID
-        	AND ms2.MovieID = ms.MovieID
+FROM Suppliers s
+WHERE NOT EXISTS ( 
+	SELECT i.MovieID -- Movies that current Supplier doesnot supply
+    FROM Inventory i
+    EXCEPT (
+    	SELECT ms.MovieID -- Movies that current Suplier supplies
+        FROM MovieSupplier ms
+        WHERE ms.SupplierID = s.SupplierID
     )
 )
 ```
+
+#### 4)
+
+```sql
+SELECT s.SupplierName, COUNT(DISTINCT ms.MovieID)
+FROM Supplier s, MovieSupplier ms
+WHERE s.SupplierID = ms.SupplierID
+GROUP BY s.SupplierName
+```
+
+#### 5)
+
+```sql
+SELECT m.MovieName
+FROM Movies m, Orders o
+WHERE m.MovieID = o.MovieID
+GROUP BY m.MovieName
+HAVING SUM(o.Copies) > 4
+```
+
+#### 6)
+
+```sql
+SELECT c.FirstName, c.LastName
+FROM Customers c, Rentals r, Movies m, Inventory i
+WHERE c.CustID = r.CustID AND r.TapeID = i.TapeID
+	AND i.MovieID = m.MovieID AND m.MovieName = "Kung Fu Panda"
+UNION
+SELECT c.FirstName, c.LastName
+FROM Customers c, Rentals r, Inventory i, MovieSupplier ms, Suppliers s
+WHERE c.CustID = r.CustID AND r.TapeID = i.TapeID
+	AND i.MovieID = ms.MovieID AND ms.SupplierID = s.SupplierID
+	AND s.SupplierName = "Palm Video"
+```
+
+#### 7)
+
+```sql
+SELECT m.MovieName
+FROM Movies m, Inventory i
+WHERE m.MovieID = i.MovieID
+GROUP BY m.MovieID
+HAVING COUNT(i.TapeID) > 1
+```
+
+#### 8)
+
+```sql
+SELECT DISTINCT c.FirstName, c.LastName
+FROM Customer c, Rentals r
+WHERE c.CustID = r.CustomerID AND r.Duration > 5
+```
+
+#### 9)
+
+```sql
+SELECT DISTINCT s.SupplierName
+FROM Suppliers s, MovieSupplier ms
+WHERE s.SupplierID = ms.SupplierID AND ms.Price = (
+	SELECT MIN(ms2.Price) -- Min Price for "C~2015"
+    FROM MovieSupplier ms2, Movies m
+    WHERE ms2.MovieID = m.MovieID AND m.MovieName = "Cinderella 2015"
+)
+```
+
+#### 10)
+
+```sql
+SELECT m.MovieName
+FROM Movies m
+WHERE m.MovieID NOT IN (
+	SELECT DISTINCT i.MovieID
+    FROM Inventory i
+)
+```
+
+
+
+### Question 4
+
+#### 1)
+
+```pseudocode
+TRIGGER START
+UPDATE Row = (NewTuple.purchaseID, NewTuple.price / 2) = (111, 1.5)
+TRIGGER END
+UPDATE Row = NewTuple = (111, 3)
+```
+
+- Conclusion: Target Row updated as (111, 3)
+
+#### 2)
+
+```pseudocode
+UPDATE Row = NewTuple = (111, 3)
+TRIGGER START
+UPDATE Row = (NewTuple.purchaseID, NewTuple.price / 2) = (111, 1.5)
+TRIGGER END
+```
+
+- Conclusion: Target Row updated as (111, 1.5)
+
+#### 3)
+
+```pseudocode
+TRIGGER START
+UPDATE Row = (NewTuple.purchaseID, NewTuple.price / 2) = (111, 1.5)
+TRIGGER END
+```
+
+- Conclusion: Target Row updated as (111, 1.5)
 
