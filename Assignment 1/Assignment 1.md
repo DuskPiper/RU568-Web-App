@@ -87,47 +87,112 @@ CREATE TABLE certification (
 
 
 
+
+
 ### Question 2
 
 #### 1)
 
 ```sql
 SELECT s.sname FROM Suppliers s
-	WHERE NOT EXISTS ( -- true if 'all parts' included in 'all parts from supplier'
-    	SELECT p.pid FROM Parts p EXCEPT ( -- all kinds of parts
-        	SELECT c.pid FROM Catalog c -- all kinds of parts from current supplier
-            	WHERE c.sid = s.sid 
-        )
+WHERE NOT EXISTS ( -- true if 'all parts' included in 'all parts from supplier'
+    SELECT p.pid FROM Parts p EXCEPT ( -- all kinds of parts
+        SELECT c.pid FROM Catalog c -- all kinds of parts from current supplier
+        WHERE c.sid = s.sid 
     )
+)
 ```
 
 #### 2)
 
 ```sql
 SELECT DISTINCT c1.sid FROM Catalog c1
-	WHERE c1.cost > (
-    	SELECT AVG(c2.cost) FROM Catalog c2 -- average of all of current kind of part
-        	WHERE c1.pid = c2.pid
-    )
+WHERE c1.cost > (
+    SELECT AVG(c2.cost) FROM Catalog c2 -- average of all of current kind of part
+    WHERE c1.pid = c2.pid
+)
 ```
 
 #### 3)
 
 ```sql
 SELECT s.sname FROM Suppliers s, Catalog c1
-	WHERE c1.sid = s.sid AND c1.cost = (
-    	SELECT MAX(c2.cost) FROM Catalog c2 -- max of all of current kind of part
-        	WHERE c1.pid = c2.pid
-    )
+WHERE c1.sid = s.sid AND c1.cost = (
+    SELECT MAX(c2.cost) FROM Catalog c2 -- max of all of current kind of part
+    WHERE c1.pid = c2.pid
+)
 ```
 
 #### 4)
 
 ```sql
 SELECT c.sid FROM Catalog c
-	WHERE NOT EXISTS ( 
-    	SELECT p.color FROM Parts p -- all colors (except red) of parts from cur supplier
-        	WHERE p.pid = c.pid AND p.color <> "red"
+WHERE NOT EXISTS ( 
+    SELECT p.color FROM Parts p -- all colors (except red) of parts from cur supplier
+    WHERE p.pid = c.pid AND p.color <> "red"
+)
+```
+
+#### 5)
+
+```sql
+SELECT c.sid FROM Catalog c
+WHERE EXISTS (
+    SELECT p.color FROM Parts p
+    WHERE p.pid = c.pid AND (p.color = "red" AND p.color = "green")
+)
+```
+
+#### 6)
+
+```sql
+SELECT s.sname, MAX(c.cost)
+FROM Suppliers s, Catalog c, Parts p
+WHERE c.sid = s.sid, c.pid = p.pid
+	AND p.color IN ("red", "green")
+```
+
+
+
+
+
+### Question 3
+
+#### 1)
+
+```sql
+SELECT m.MovieName
+FROM Movies m, MovieSupplier ms, Suppliers s
+WHERE ms.SupplierID = s.SupplierID AND ms.MovieID = m.MovieID
+	AND (s.SupplierName = "Ben's Video" OR s.SupplierName = "Video Clubhouse")
+```
+
+#### 2)
+
+```sql
+SELECT m.MovieName
+FROM Movies m, Inventory i, Rentals r
+WHERE i.MovieID = m.MovieID AND i.TapeID = r.TapeID
+	AND r.Duration >= ALL(
+    	SELECT Duration FROM Rentals
     )
+```
+
+#### 3)
+
+```sql
+SELECT s.SupplierName
+FROM Supplier s
+WHERE s.SupplierID NOT IN (
+	SELECT ms.SupplierID
+    FROM MovieSupplier ms, Inverntory i
+    WHERE NOT EXISTS (
+		SELECT *
+        FROM MovieSupplier ms2, Inventory i2
+        WHERE i2.MovieID = ms2.MovieID
+        	AND i2.MovieID = i.movieID
+        	AND ms2.MovieID = ms.MovieID
+    )
+)
 ```
 
