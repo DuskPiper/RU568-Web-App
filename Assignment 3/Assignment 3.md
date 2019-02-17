@@ -4,9 +4,16 @@
 
 
 
-## Project
+## Project README
 
-This project is based on Python3, please run "bayesian_curve_fitting.py" with proper csv data kept in "./data/".
+This project is based on Python3, please make sure that proper csv data kept in "./data/" and that Numpy is available for your Python version. Then run "bayesian_curve_fitting.py" in terminal at Project directory.
+
+```bash
+$ cd Project
+$ python bayesian_curve_fitting.py
+```
+
+
 
 ## Data and Tests
 
