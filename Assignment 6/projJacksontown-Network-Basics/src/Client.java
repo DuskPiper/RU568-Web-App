@@ -21,7 +21,7 @@ public class Client {
 
             while (flag) {
                 /* Input command */
-                System.out.print(">?> Enter command:");
+                System.out.println(">?> Enter command:");
                 String command = userEntry.readLine();
 
                 /* Check and send command */
@@ -36,7 +36,7 @@ public class Client {
                 }
 
                 /* Receive msg from server */
-                System.out.println(">>> SERVER: " + in.readLine());
+                System.out.println(">>> SERVER: [" + in.readLine() + "]");
 
                 /* Handle command actions */
                 if (command.substring(0, 4).equals("EXIT")) {

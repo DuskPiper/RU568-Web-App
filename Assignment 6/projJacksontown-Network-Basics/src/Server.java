@@ -15,18 +15,18 @@ import java.util.regex.Pattern;
 
 public class Server {
     public static void main(String[] args) {
-        if (args == null || args.length != 2) {
+        if (args == null || args.length != 1) {
             System.err.println(">x> ERROR! Illegal arguments");
             System.exit(100);
         }
-        int port = Integer.parseInt(args[1]);
+        int port = Integer.parseInt(args[0]);
         String commandFormat = "\\b(GET|BOUNCE|EXIT)\\b<.*>|\\bEXIT\\b";
 
         try {
             ServerSocket serverSocket = new ServerSocket(port);
             boolean flag = true;
             while (flag) {
-                // System.out.println(">i> STAND BY: awaiting for connection...");
+                System.out.println(">i> STAND BY: awaiting for connection...");
                 try {
                     /* Initialize */
                     Socket socket = serverSocket.accept();
@@ -67,6 +67,7 @@ public class Server {
                         if (!file.exists()) {
                             System.out.println(">!> GET error: file not found.");
                             out.println(">!> GET error: file not found.");
+                            out.println(0); // 0-line of file content
                         } else {
                             Scanner scanner = new Scanner(file);
                             System.out.println(">>> GET file: " + filename);
@@ -77,6 +78,10 @@ public class Server {
                             while (scanner.hasNextLine()) {
                                 lines ++;
                                 content.add(scanner.nextLine());
+                            }
+                            out.println(lines);
+                            for (String s : content) {
+                                out.println(s);
                             }
                         }
                     } else {
