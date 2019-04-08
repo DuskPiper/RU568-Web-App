@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
-public class Server {
+public class Server { // ToDo: dialog interface enhancements
     public static void main(String[] args) {
         if (args == null || args.length != 1) {
             System.err.println(">x> ERROR! Illegal arguments");
@@ -24,20 +24,27 @@ public class Server {
 
         try {
             ServerSocket serverSocket = new ServerSocket(port);
-            boolean looper = true; // inner loop control
             boolean outLooper = true; // outer loop control, set false to end program listening
-            while (outLooper) {
-                System.out.println(">i> STAND BY: awaiting for connection...");
+            while (outLooper) { // each loop is a client
+                System.out.println(">i> STAND BY: waiting for connection...");
                 try {
                     /* Initialize */
                     Socket socket = serverSocket.accept();
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
+                    System.out.println(">>> Connected");
+                    boolean looper = true; // inner loop control
 
-                    while (looper) {
+                    while (looper) { // each loop is a command by client
                         /* Receive command */
                         System.out.print(">?> Enter command:");
                         String command = in.readLine();
+                        /*if ("TERMINATE SERVER".equals(command)) { // special command to end server
+                            System.out.println(">>> SERVER TERMINATION. Goodbye.");
+                            out.println("TERMINATING SERVER. Goodbye.");
+                            looper = false;
+                            outLooper = false;
+                        }*/
                         boolean isLegalInput = command != null && Pattern.matches(commandFormat, command);
                         if (!isLegalInput) {
                             System.out.println(">!> WARNING: illegal command.");
@@ -46,21 +53,17 @@ public class Server {
                         }
 
                         /* Process command */
-                        if ("TERMINATE SERVER".equals(command)) {
-                            System.out.println(">>> SERVER TERMINATION. Goodbye.");
-                            out.println("TERMINATING SERVER. Goodbye.");
-                            looper = false;
-                        } else if ("EXIT".equals(command)) {
+                        if ("EXIT".equals(command)) {
                             // normal <EXIT>
                             System.out.println(">>> NORMAL EXIT: Ending connection.");
                             out.println("NORMAL EXIT: Ending connection.");
-                            //looper = false;
+                            looper = false;
                         } else if (command.length() >= 4 && command.substring(0, 4).equals("EXIT")) {
                             // abnormal <EXIT>
                             String exitCode = command.substring(5, command.length() - 1);
                             System.out.println(">>> ABNORMAL EXIT: ending connection. Exit code = " + exitCode);
                             out.println("ABNORMAL EXIT: code = " + exitCode);
-                            //looper = false;
+                            looper = false;
                         } else if (command.substring(0, 6).equals("BOUNCE")) {
                             // <BOUNCE>
                             String clientMsg = command.substring(7, command.length() - 1);

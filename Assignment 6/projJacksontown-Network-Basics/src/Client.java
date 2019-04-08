@@ -1,8 +1,15 @@
+/*
+A basic server implementation
+@author Ruiyu Zhang
+@created 2019.04.07
+@compile JDK11
+*/
+
 import java.io.*;
 import java.net.Socket;
 import java.util.regex.Pattern;
 
-public class Client {
+public class Client { // ToDo: dialog interface enhancements
     public static void main(String[] args) {
         if (args == null || args.length != 2) {
             System.err.println(">x> ERROR! Illegal arguments");
