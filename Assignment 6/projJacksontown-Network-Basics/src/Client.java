@@ -17,9 +17,9 @@ public class Client {
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
             BufferedReader userEntry = new BufferedReader(new InputStreamReader(System.in));
-            boolean flag = true;
+            boolean looper = true;
 
-            while (flag) {
+            while (looper) {
                 /* Input command */
                 System.out.println(">?> Enter command:");
                 String command = userEntry.readLine();
@@ -31,7 +31,6 @@ public class Client {
                     out.println(command);
                 } else {
                     System.out.println(">!> WARNING: illegal command.");
-                    out.println(">!> WARNING: illegal command.");
                     continue;
                 }
 
@@ -40,7 +39,7 @@ public class Client {
 
                 /* Handle command actions */
                 if (command.substring(0, 4).equals("EXIT")) {
-                    flag = false;
+                    looper = false;
                 } else if (command.substring(0, 3).equals("GET")) {
                     int lines = Integer.parseInt(in.readLine());
                     System.out.println("--START-OF-FILE-----------------------------------------");
