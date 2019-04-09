@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Pattern;
 
-public class Server { // ToDo: dialog interface enhancements
+public class Server {
     public static void main(String[] args) {
         if (args == null || args.length != 1) {
             System.err.println(">x> ERROR! Illegal arguments");
@@ -26,18 +26,18 @@ public class Server { // ToDo: dialog interface enhancements
             ServerSocket serverSocket = new ServerSocket(port);
             boolean outLooper = true; // outer loop control, set false to end program listening
             while (outLooper) { // each loop is a client
-                System.out.println(">i> STAND BY: waiting for connection...");
+                System.out.println(">>> STAND BY: waiting for connection...");
                 try {
                     /* Initialize */
                     Socket socket = serverSocket.accept();
                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     PrintWriter out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()), true);
-                    System.out.println(">>> Connected");
+                    System.out.println(">>> Connected.");
                     boolean looper = true; // inner loop control
 
                     while (looper) { // each loop is a command by client
                         /* Receive command */
-                        System.out.print(">?> Enter command:");
+                        //System.out.print(">?> Enter command:");
                         String command = in.readLine();
                         /*if ("TERMINATE SERVER".equals(command)) { // special command to end server
                             System.out.println(">>> SERVER TERMINATION. Goodbye.");
@@ -47,8 +47,8 @@ public class Server { // ToDo: dialog interface enhancements
                         }*/
                         boolean isLegalInput = command != null && Pattern.matches(commandFormat, command);
                         if (!isLegalInput) {
-                            System.out.println(">!> WARNING: illegal command.");
-                            out.println("WARNING: illegal command.");
+                            System.out.println(">!> REJECTION: illegal command.");
+                            out.println("REJECTION: illegal command.");
                             continue;
                         }
 
@@ -68,7 +68,7 @@ public class Server { // ToDo: dialog interface enhancements
                             // <BOUNCE>
                             String clientMsg = command.substring(7, command.length() - 1);
                             System.out.println(">>> BOUNCING client msg: " + clientMsg);
-                            out.println("BOUNCING: " + clientMsg);
+                            out.println("ECHO: " + clientMsg);
                         } else if (command.substring(0, 3).equals("GET")) {
                             // <GET>
                             String filename = command.substring(4, command.length() - 1);
@@ -95,8 +95,8 @@ public class Server { // ToDo: dialog interface enhancements
                                 }
                             }
                         } else {
-                            System.out.println(">!> WARNING: illegal command.");
-                            out.println("WARNING: illegal command.");
+                            System.out.println(">!> REJECTION: illegal command.");
+                            out.println("REJECTION: illegal command.");
                         }
                     }
                     socket.close();
