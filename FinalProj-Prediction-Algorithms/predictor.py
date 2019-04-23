@@ -14,10 +14,16 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVR
 
 class Predictor:
+    '''
+    collection of predictors
+    all predictor input x&y shape: (-1, 1), dtype = float
+    '''
 
     @staticmethod
     def bayes(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
         '''predicts with Bayesian Regression (sklearn.linear_model.BayesianRidge()'''
+
+        train_y = np.ravel(train_y, order='C')
 
         def calculate_score(feature_deg, train_x, train_y):
             '''constructs pipeline under Bayesian model and evaluates score.'''
@@ -53,6 +59,8 @@ class Predictor:
     def SVR(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
         '''predicts with SVM based Regression (sklearn.svm.SVR())'''
 
+        train_y = np.ravel(train_y, order='C')
+
         # build model
         pipe = make_pipeline(
             StandardScaler(),
@@ -78,6 +86,8 @@ class Predictor:
     @staticmethod
     def DNN(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
         '''predicts with TensorFlow based Neural Network (DNNRegressor.Estimator())'''
+
+        train_y = np.ravel(train_y, order='C')
 
         STEPS = 1000
         PRICE_NORM_FACTOR = 10
@@ -162,5 +172,27 @@ class Predictor:
 
 
 if __name__ == "__main__":
-    '''driver codes'''
+    '''driver codes as sample & debugger'''
+    # preparation
     tf.logging.set_verbosity(tf.logging.INFO) # setup tf logs
+
+    # generate test data
+    import random
+    train_x = np.array([float(i) for i in range(30)]).reshape(-1, 1)
+    train_y = np.array([float(i) * 10 + random.randint(1, 9) for i in range(30)]).reshape(-1, 1)
+    pred_x = np.array([float(i) for i in range(30, 34)]).reshape(-1, 1)
+
+    # test
+    print(train_x.reshape(1, -1))
+    print(train_y.reshape(1, -1))
+    print(pred_x.reshape(1, -1))
+
+    print("BAYES:")
+    print(Predictor.bayes(train_x, train_y, pred_x))
+
+    print("SVR:")
+    print(Predictor.SVR(train_x, train_y, pred_x))
+
+    print("DNN:")
+    print(Predictor.DNN(train_x, train_y, pred_x))
+
