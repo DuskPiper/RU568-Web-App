@@ -4,7 +4,9 @@
 @intro.: Predicts stocks price with 3 techniques (Bayes, SVR, DNN)
 '''
 from os import cpu_count
+from random import sample
 import numpy as np
+import tensorflow as tf
 from sklearn.linear_model import BayesianRidge
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler, PolynomialFeatures
@@ -15,7 +17,7 @@ class Predictor:
 
     @staticmethod
     def bayes(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
-        '''predicts with Bayesian Regression.'''
+        '''predicts with Bayesian Regression (sklearn.linear_model.BayesianRidge()'''
 
         def calculate_score(feature_deg, train_x, train_y):
             '''constructs pipeline under Bayesian model and evaluates score.'''
@@ -31,14 +33,14 @@ class Predictor:
         best_deg = -1 # degree to gain best score
         deg_range = 50 # degree range for testing
 
-        '''find the best degree for PolynomialFeatures'''
+        # find the best degree for PolynomialFeatures
         for deg in range(1, deg_range):
             score = calculate_score(deg, train_x, train_y)
             if score > record:
                 record = score
                 best_deg = deg
 
-        '''build model, train with best deg, and predict'''
+        # build model, train with best deg, and predict
         pipe = make_pipeline(
             StandardScaler(),
             PolynomialFeatures(best_deg),
@@ -49,15 +51,15 @@ class Predictor:
 
     @staticmethod
     def SVR(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
-        '''predicts with SVM based Regression'''
+        '''predicts with SVM based Regression (sklearn.svm.SVR())'''
 
-        '''build model'''
+        # build model
         pipe = make_pipeline(
             StandardScaler(),
             SVR()
         )
 
-        '''train with auto-var grad search'''
+        # train with auto-var grad search
         model = GridSearchCV(
             pipe,
             param_grid={
@@ -69,11 +71,96 @@ class Predictor:
             verbose=0
         )
 
-        '''predict'''
+        # predict
         model.fit(train_x, train_y)
         return model.predict(pred_x)
 
     @staticmethod
-    def dnn(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
-        '''predicts with TensorFlow based Neural Network'''
-        return None
+    def DNN(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
+        '''predicts with TensorFlow based Neural Network (DNNRegressor.Estimator())'''
+
+        STEPS = 1000
+        PRICE_NORM_FACTOR = 10
+        SECONDS_OF_ONE_DAY = 86400
+        SHUFFLE_TIMES = 1000 # shuffle multiple times (likely > dataset size) to ensure enough mixture
+        DEBUG = True
+        
+        # preprocess
+        pred_x = train_x[0] - pred_x
+        train_x = train_x[0] - train_x
+        pred_x /= SECONDS_OF_ONE_DAY
+        train_x /= SECONDS_OF_ONE_DAY
+
+        rate = 1 # typically 0.7
+        l1 = sample(list(range(train_x.shape[0])), int(len(train_x) * rate))
+        x_trainset = train_x[l1]
+        y_trainset = train_y[l1]
+        l2 = list(set(list(range(train_x.shape[0]))) - set(l1))
+        x_testset = train_x[l2]
+        y_testset = train_y[l2]
+
+        x_train_dist = {"time": x_trainset}
+        x_test_dist = {"time": x_testset}
+        x_dist = {"time": pred_x}
+
+        train = tf.data.Dataset.from_tensor_slices((dict(x_train_dist), y_trainset))
+        test = tf.data.Dataset.from_tensor_slices((dict(x_test_dist), y_testset))
+        to_predict_x = tf.data.Dataset.from_tensor_slices(dict(x_dist))
+
+        def normalize_price(features, labels):
+            return features, labels / PRICE_NORM_FACTOR
+        train = train.map(normalize_price)
+        test = test.map(normalize_price)
+
+        # build training and evaluation input_functions
+        def input_train():
+            return (train.shuffle(SHUFFLE_TIMES).batch(128) # shuffle
+                    .repeat().make_one_shot_iterator().get_next()) # Repeat forever
+
+        def input_test():
+            return (test.shuffle(SHUFFLE_TIMES).batch(128)
+                    .make_one_shot_iterator().get_next())
+
+        # build Neural Network model
+        model = tf.estimator.DNNRegressor(
+            hidden_units=[20, 20],
+            feature_columns=tf.feature_column.numeric_column(key="time"),
+            optimizer=tf.train.ProximalAdagradOptimizer(
+                learning_rate=0.3,
+                l1_regularization_strength=0.001
+            )
+        )
+
+        # train
+        model.train(input_fn=input_train(), steps=STEPS)
+        prediction = model.predict(input_fn=to_predict_x.make_one_shot_iterator().get_next())
+        pred_list = list(prediction)
+
+        # evaluate
+        eval_res = model.evaluate(input_fn=input_test())
+        ave_loss = eval_res["average_loss"]
+
+        # debug
+        if DEBUG:
+            print(pred_list[0]['predictions'][0] * PRICE_NORM_FACTOR)
+            print("\n" + 80 * "*")
+            print("\nRMS err on testset: ${:.0f}".format(PRICE_NORM_FACTOR * average_loss ** 0.5),
+                  end="\n")
+
+        return pred_list[0]['predictions'][0] * PRICE_NORM_FACTOR
+
+    @staticmethod
+    def _calculateEMA(val: np.ndarray) -> np.float_:
+        '''calculates Exponential Moving Average, DOES NOT PREDICT'''
+
+        if val.size < 10: return np.float_(-1)
+        ret = sum(val[:10]) / 10
+        multiplier = 2 / (10 + 1)
+        for v in val[10:]:
+            ret = (v - ret) * multiplier + ret
+        return ret
+
+
+if __name__ == "__main__":
+    '''driver codes'''
+    tf.logging.set_verbosity(tf.logging.INFO) # setup tf logs
