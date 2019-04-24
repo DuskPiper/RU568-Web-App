@@ -22,6 +22,7 @@ class Predictor:
     @staticmethod
     def bayes(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
         '''predicts with Bayesian Regression (sklearn.linear_model.BayesianRidge()'''
+        '''DEV NOTE: 效率几乎不受数据量影响，数据少(<100)时准确性极差'''
 
         train_y = np.ravel(train_y, order='C')  # fix input shape
 
@@ -37,7 +38,7 @@ class Predictor:
 
         record = -1  # best score
         best_deg = -1  # degree to gain best score
-        deg_range = 50  # degree range for testing
+        deg_range = 70  # degree range for testing
 
         # find the best degree for PolynomialFeatures
         for deg in range(1, deg_range):
@@ -49,7 +50,7 @@ class Predictor:
         # build model, train with best deg, and predict
         pipe = make_pipeline(
             StandardScaler(),
-            PolynomialFeatures(best_deg),   # ToDo: Enhance accurarcy, pre-set parameters
+            PolynomialFeatures(best_deg),
             BayesianRidge(normalize=False)
         )
         pipe.fit(train_x, train_y)
@@ -58,6 +59,7 @@ class Predictor:
     @staticmethod
     def SVR(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
         '''predicts with SVM based Regression (sklearn.svm.SVR())'''
+        '''DEV NOTE: 数据少时准确性(相对)好，数据多时(>200)效率极低、准确性一般'''
 
         train_y = np.ravel(train_y, order='C')  # fix input shape
 
@@ -86,27 +88,26 @@ class Predictor:
     @staticmethod
     def DNN(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
         '''predicts with TensorFlow based Neural Network (DNNRegressor.Estimator())'''
+        '''DEV NOTE: 效率受数据量影响较小，准确性一直好'''
 
         train_y = np.ravel(train_y, order='C')  # fix input shape
 
-        STEPS = 1000 # training steps
-        PRICE_NORM_FACTOR = 10
-        SECONDS_OF_ONE_DAY = 86400
+        STEPS = 300 # training steps
+        PRICE_NORM_FACTOR = 10 # for normalization
+        SECONDS_OF_ONE_DAY = 86400  # legacy var
         SHUFFLE_TIMES = 1000  # shuffle multiple times (likely > dataset size) to ensure enough mixture
-        DEBUG = 0
+        DEBUG = 0 # debug mode flag
 
         if not DEBUG: # mute various warnings
             os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # mute CPU AVX warning
             tf.logging.set_verbosity(tf.logging.ERROR) # mute warnings from tf
         
         # preprocess
-        pred_x = train_x[0] - pred_x
-        train_x = train_x[0] - train_x
-        pred_x = pred_x / SECONDS_OF_ONE_DAY
-        train_x = train_x / SECONDS_OF_ONE_DAY
+        pred_x = (train_x[0] - pred_x) #/ SECONDS_OF_ONE_DAY
+        train_x = (train_x[0] - train_x) #/ SECONDS_OF_ONE_DAY
 
-        rate = 1 # typically 0.7
-        l1 = sample(list(range(train_x.shape[0])), int(len(train_x) * rate))
+        trainset_ratio = 0.7
+        l1 = sample(list(range(train_x.shape[0])), int(len(train_x) * trainset_ratio))
         x_trainset = train_x[l1]
         y_trainset = train_y[l1]
         l2 = list(set(list(range(train_x.shape[0]))) - set(l1))
@@ -160,15 +161,16 @@ class Predictor:
         # debug
         if DEBUG:
             print(pred_list[0]['predictions'][0] * PRICE_NORM_FACTOR)
-            print(80 * "_")
             print("\nRMS err on testset: {:.0f}".format(PRICE_NORM_FACTOR * ave_loss ** 0.5),
                   end="\n")
+            print(80 * "_")
+            print(pred_list)
 
-        return pred_list[0]['predictions'][0] * PRICE_NORM_FACTOR
+        return np.array([pred['predictions'][0] * PRICE_NORM_FACTOR for pred in pred_list])
 
     @staticmethod
     def _calculateEMA(val: np.ndarray) -> np.float_:
-        '''calculates Exponential Moving Average, DOES NOT PREDICT'''
+        '''calculates Exponential Moving Average, DOES NOT PREDICT ANYTHING'''
 
         if val.size < 10: return np.float_(-1)
         ret = sum(val[:10]) / 10
@@ -184,22 +186,25 @@ if __name__ == "__main__":
     #tf.logging.set_verbosity(tf.logging.INFO) # setup tf logs
 
     # generate test data
+    history_size = 30
+    predict_size = 5
     import random
-    train_x = np.array([float(i) for i in range(30)]).reshape(-1, 1)
-    train_y = np.array([float(i) * 10 + uniform(0., 9.) for i in range(30)]).reshape(-1, 1)
-    pred_x = np.array([float(i) for i in range(30, 34)]).reshape(-1, 1)
+    train_x = np.array([float(i) for i in range(history_size)]).reshape(-1, 1)
+    train_y = np.array([float(i) * 10 + uniform(0., 9.) for i in range(history_size)]).reshape(-1, 1)
+    pred_x = np.array([float(i) for i in range(history_size, history_size + predict_size)]).reshape(-1, 1)
 
     # test
-    print(train_x.reshape(1, -1))
-    print(train_y.reshape(1, -1))
+    if history_size < 100:
+        print(train_x.reshape(1, -1))
+        print(train_y.reshape(1, -1))
     print(pred_x.reshape(1, -1))
 
-    print("BAYES:")
+    print("\nBAYES:")
     print(Predictor.bayes(train_x, train_y, pred_x))
 
-    print("SVR:")
+    print("\nSVR:")
     print(Predictor.SVR(train_x, train_y, pred_x))
 
-    print("DNN:")
+    print("\nDNN:")
     print(Predictor.DNN(train_x, train_y, pred_x))
 
