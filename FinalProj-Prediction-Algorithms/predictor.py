@@ -3,8 +3,8 @@
 @create: 2019.04.22
 @intro.: Predicts stocks price with 3 techniques (Bayes, SVR, DNN)
 '''
-from os import cpu_count
-from random import sample
+import os
+from random import sample, randint, uniform
 import numpy as np
 import tensorflow as tf
 from sklearn.linear_model import BayesianRidge
@@ -23,21 +23,21 @@ class Predictor:
     def bayes(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
         '''predicts with Bayesian Regression (sklearn.linear_model.BayesianRidge()'''
 
-        train_y = np.ravel(train_y, order='C')
+        train_y = np.ravel(train_y, order='C')  # fix input shape
 
         def calculate_score(feature_deg, train_x, train_y):
             '''constructs pipeline under Bayesian model and evaluates score.'''
             pipe = make_pipeline(
                 StandardScaler(), 
-                PolynomialFeatures(feature_deg), # featire_deg: 多项式的度
+                PolynomialFeatures(feature_deg),  # featire_deg: 多项式的度
                 BayesianRidge(normalize=False)
                 )
             pipe.fit(train_x, train_y)
             return pipe.score(train_x, train_y)
 
-        record = -1 # best score
-        best_deg = -1 # degree to gain best score
-        deg_range = 50 # degree range for testing
+        record = -1  # best score
+        best_deg = -1  # degree to gain best score
+        deg_range = 50  # degree range for testing
 
         # find the best degree for PolynomialFeatures
         for deg in range(1, deg_range):
@@ -49,7 +49,7 @@ class Predictor:
         # build model, train with best deg, and predict
         pipe = make_pipeline(
             StandardScaler(),
-            PolynomialFeatures(best_deg),
+            PolynomialFeatures(best_deg),   # ToDo: Enhance accurarcy, pre-set parameters
             BayesianRidge(normalize=False)
         )
         pipe.fit(train_x, train_y)
@@ -59,7 +59,7 @@ class Predictor:
     def SVR(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
         '''predicts with SVM based Regression (sklearn.svm.SVR())'''
 
-        train_y = np.ravel(train_y, order='C')
+        train_y = np.ravel(train_y, order='C')  # fix input shape
 
         # build model
         pipe = make_pipeline(
@@ -74,7 +74,7 @@ class Predictor:
                 'svr__gamma': np.logspace(-2, 2, 5),
                 'svr__C': [1e0, 1e1, 1e2, 1e3]
             },
-            n_jobs=cpu_count(),
+            n_jobs=os.cpu_count(),
             cv=(train_x.shape[0] // 10),
             verbose=0
         )
@@ -87,19 +87,23 @@ class Predictor:
     def DNN(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
         '''predicts with TensorFlow based Neural Network (DNNRegressor.Estimator())'''
 
-        train_y = np.ravel(train_y, order='C')
+        train_y = np.ravel(train_y, order='C')  # fix input shape
 
-        STEPS = 1000
+        STEPS = 1000 # training steps
         PRICE_NORM_FACTOR = 10
         SECONDS_OF_ONE_DAY = 86400
-        SHUFFLE_TIMES = 1000 # shuffle multiple times (likely > dataset size) to ensure enough mixture
-        DEBUG = True
+        SHUFFLE_TIMES = 1000  # shuffle multiple times (likely > dataset size) to ensure enough mixture
+        DEBUG = 0
+
+        if not DEBUG: # mute various warnings
+            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # mute CPU AVX warning
+            tf.logging.set_verbosity(tf.logging.ERROR) # mute warnings from tf
         
         # preprocess
         pred_x = train_x[0] - pred_x
         train_x = train_x[0] - train_x
-        pred_x /= SECONDS_OF_ONE_DAY
-        train_x /= SECONDS_OF_ONE_DAY
+        pred_x = pred_x / SECONDS_OF_ONE_DAY
+        train_x = train_x / SECONDS_OF_ONE_DAY
 
         rate = 1 # typically 0.7
         l1 = sample(list(range(train_x.shape[0])), int(len(train_x) * rate))
@@ -131,10 +135,13 @@ class Predictor:
             return (test.shuffle(SHUFFLE_TIMES).batch(128)
                     .make_one_shot_iterator().get_next())
 
+        def pred_fn():
+            return to_predict_x.make_one_shot_iterator().get_next()
+
         # build Neural Network model
         model = tf.estimator.DNNRegressor(
             hidden_units=[20, 20],
-            feature_columns=tf.feature_column.numeric_column(key="time"),
+            feature_columns=[tf.feature_column.numeric_column(key="time")],
             optimizer=tf.train.ProximalAdagradOptimizer(
                 learning_rate=0.3,
                 l1_regularization_strength=0.001
@@ -142,19 +149,19 @@ class Predictor:
         )
 
         # train
-        model.train(input_fn=input_train(), steps=STEPS)
-        prediction = model.predict(input_fn=to_predict_x.make_one_shot_iterator().get_next())
+        model.train(input_fn=input_train, steps=STEPS)
+        prediction = model.predict(input_fn=pred_fn)
         pred_list = list(prediction)
 
         # evaluate
-        eval_res = model.evaluate(input_fn=input_test())
+        eval_res = model.evaluate(input_fn=input_test)
         ave_loss = eval_res["average_loss"]
 
         # debug
         if DEBUG:
             print(pred_list[0]['predictions'][0] * PRICE_NORM_FACTOR)
-            print("\n" + 80 * "*")
-            print("\nRMS err on testset: ${:.0f}".format(PRICE_NORM_FACTOR * average_loss ** 0.5),
+            print(80 * "_")
+            print("\nRMS err on testset: {:.0f}".format(PRICE_NORM_FACTOR * ave_loss ** 0.5),
                   end="\n")
 
         return pred_list[0]['predictions'][0] * PRICE_NORM_FACTOR
@@ -174,12 +181,12 @@ class Predictor:
 if __name__ == "__main__":
     '''driver codes as sample & debugger'''
     # preparation
-    tf.logging.set_verbosity(tf.logging.INFO) # setup tf logs
+    #tf.logging.set_verbosity(tf.logging.INFO) # setup tf logs
 
     # generate test data
     import random
     train_x = np.array([float(i) for i in range(30)]).reshape(-1, 1)
-    train_y = np.array([float(i) * 10 + random.randint(1, 9) for i in range(30)]).reshape(-1, 1)
+    train_y = np.array([float(i) * 10 + uniform(0., 9.) for i in range(30)]).reshape(-1, 1)
     pred_x = np.array([float(i) for i in range(30, 34)]).reshape(-1, 1)
 
     # test
