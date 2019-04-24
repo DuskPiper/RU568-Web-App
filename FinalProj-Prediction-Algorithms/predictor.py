@@ -92,10 +92,10 @@ class Predictor:
 
         train_y = np.ravel(train_y, order='C')  # fix input shape
 
-        STEPS = 300 # training steps
+        STEPS = 1500 # training steps
         PRICE_NORM_FACTOR = 10 # for normalization
-        SECONDS_OF_ONE_DAY = 86400  # legacy var
-        SHUFFLE_TIMES = 1000  # shuffle multiple times (likely > dataset size) to ensure enough mixture
+        SECONDS_OF_ONE_DAY = 86400
+        SHUFFLE_TIMES = 500  # shuffle multiple times (likely > dataset size) to ensure adequate mixture
         DEBUG = 0 # debug mode flag
 
         if not DEBUG: # mute various warnings
@@ -103,8 +103,8 @@ class Predictor:
             tf.logging.set_verbosity(tf.logging.ERROR) # mute warnings from tf
         
         # preprocess
-        pred_x = (train_x[0] - pred_x) #/ SECONDS_OF_ONE_DAY
-        train_x = (train_x[0] - train_x) #/ SECONDS_OF_ONE_DAY
+        pred_x = (train_x[0] - pred_x) / SECONDS_OF_ONE_DAY
+        train_x = (train_x[0] - train_x) / SECONDS_OF_ONE_DAY
 
         trainset_ratio = 0.7
         l1 = sample(list(range(train_x.shape[0])), int(len(train_x) * trainset_ratio))
@@ -185,8 +185,10 @@ if __name__ == "__main__":
     # preparation
     #tf.logging.set_verbosity(tf.logging.INFO) # setup tf logs
 
+    print('_' * 80)
+    print('RUNNING MOCK DATA\n')
     # generate test data
-    history_size = 30
+    history_size = 300
     predict_size = 5
     import random
     train_x = np.array([float(i) for i in range(history_size)]).reshape(-1, 1)
@@ -203,8 +205,37 @@ if __name__ == "__main__":
     print(Predictor.bayes(train_x, train_y, pred_x))
 
     print("\nSVR:")
+    #print(Predictor.SVR(train_x, train_y, pred_x))
+
+    print("\nDNN:")
+    #print(Predictor.DNN(train_x, train_y, pred_x))
+
+
+    # real data
+    from datetime import datetime
+    print('_' * 80)
+    print('RUNNING REAL DATA\n')
+    from get_stock_data import get_formated_daily_prices
+
+    whole_data = get_formated_daily_prices('GOOG')
+    print("dataset size = ", len(whole_data))
+    train_x = []
+    train_y = []
+    pred_x = np.array(datetime.now().timestamp()).reshape(-1, 1)
+    for row in whole_data:
+        train_x.append(row[0])
+        train_y.append(row[1])
+    train_x = np.array(train_x).reshape(-1, 1)
+    train_y = np.array(train_y).reshape(-1, 1)
+
+    print("\nBAYES:")
+    print(Predictor.bayes(train_x, train_y, pred_x))
+
+    print("\nSVR:")
     print(Predictor.SVR(train_x, train_y, pred_x))
 
     print("\nDNN:")
     print(Predictor.DNN(train_x, train_y, pred_x))
+
+
 
