@@ -9,6 +9,7 @@ import requests
 from bson.decimal128 import Decimal128
 from bson.errors import BSONError
 from bson.int64 import Int64
+from env import Env
 
 #from utils import Utils
 
@@ -86,7 +87,7 @@ class StocksData(object):
         return results
 
 
-def get_formated_daily_prices(symbol, apikey=''):
+def get_formated_daily_prices(symbol, apikey=Env.alpha_vantage_api_key):
     URL = 'https://www.alphavantage.co/query'
     if not symbol: raise ValueError
     if isinstance(symbol, str): symbol = [symbol, ]
@@ -120,7 +121,7 @@ def get_formated_daily_prices(symbol, apikey=''):
 
 
 if __name__ == '__main__':
-    cirno = StocksData('FILL_API_KEY_HERE')
+    cirno = StocksData(Env.alpha_vantage_api_key)
     # print(cirno.getRealtimePrice('GOOG'))
     daily = cirno.getDailyData('GOOG')
     for row in daily:

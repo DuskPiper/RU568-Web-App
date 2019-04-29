@@ -5,6 +5,9 @@
 '''
 
 import numpy as np
+from alpha_vantage.techindicators import TechIndicators
+import json
+from env import Env
 
 class Indicator:
     '''
@@ -46,3 +49,20 @@ class Indicator:
         '''
 
         return Indicator.EMA(val12) - Indicator.EMA(val26)
+
+class AlphaVantageIndicators:
+    '''
+    enables alpha_vantage for indicator calculation
+    '''
+
+    @staticmethod
+    def ROC(stock_name):
+        ti = TechIndicators(key=Env.alpha_vantage_api_key, output_format='pandas')
+        data, meta_data = ti.get_roc(symbol=stock_name, interval='1min', time_period=60, series_type='close')
+        #data.to_csv(stock_name + ' - ROC indicator.csv', index=True, sep=',')
+        return data.to_json(orient='split')
+
+if __name__ == "__main__":
+    print(AlphaVantageIndicators.ROC("GOOG"))
+
+
