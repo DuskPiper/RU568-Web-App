@@ -38,7 +38,7 @@ class Predictor:
 
         record = -1  # best score
         best_deg = -1  # degree to gain best score
-        deg_range = 70  # degree range for testing
+        deg_range = 100  # degree range for testing
 
         # find the best degree for PolynomialFeatures
         for deg in range(1, deg_range):
@@ -168,66 +168,29 @@ class Predictor:
 
         return np.array([pred['predictions'][0] * PRICE_NORM_FACTOR for pred in pred_list])
 
-    @staticmethod
-    def _calculateEMA(val: np.ndarray) -> np.float_:
-        '''calculates Exponential Moving Average, DOES NOT PREDICT ANYTHING'''
-
-        if val.size < 10: return np.float_(-1)
-        ret = sum(val[:10]) / 10
-        multiplier = 2 / (10 + 1)
-        for v in val[10:]:
-            ret = (v - ret) * multiplier + ret
-        return ret
-
 
 if __name__ == "__main__":
     '''driver codes as sample & debugger'''
     # preparation
     #tf.logging.set_verbosity(tf.logging.INFO) # setup tf logs
 
+    '''
+    # mock data
+    import random
     print('_' * 80)
     print('RUNNING MOCK DATA\n')
     # generate test data
     history_size = 300
     predict_size = 5
-    import random
     train_x = np.array([float(i) for i in range(history_size)]).reshape(-1, 1)
     train_y = np.array([float(i) * 10 + uniform(0., 9.) for i in range(history_size)]).reshape(-1, 1)
     pred_x = np.array([float(i) for i in range(history_size, history_size + predict_size)]).reshape(-1, 1)
-
-    # test
     if history_size < 100:
         print(train_x.reshape(1, -1))
         print(train_y.reshape(1, -1))
     print(pred_x.reshape(1, -1))
 
-    print("\nBAYES:")
-    print(Predictor.bayes(train_x, train_y, pred_x))
-
-    print("\nSVR:")
-    #print(Predictor.SVR(train_x, train_y, pred_x))
-
-    print("\nDNN:")
-    #print(Predictor.DNN(train_x, train_y, pred_x))
-
-
-    # real data
-    from datetime import datetime
-    print('_' * 80)
-    print('RUNNING REAL DATA\n')
-    from get_stock_data import get_formated_daily_prices
-
-    whole_data = get_formated_daily_prices('GOOG')
-    print("dataset size = ", len(whole_data))
-    train_x = []
-    train_y = []
-    pred_x = np.array(datetime.now().timestamp()).reshape(-1, 1)
-    for row in whole_data:
-        train_x.append(row[0])
-        train_y.append(row[1])
-    train_x = np.array(train_x).reshape(-1, 1)
-    train_y = np.array(train_y).reshape(-1, 1)
-
+    # predict
     print("\nBAYES:")
     print(Predictor.bayes(train_x, train_y, pred_x))
 
@@ -236,6 +199,63 @@ if __name__ == "__main__":
 
     print("\nDNN:")
     print(Predictor.DNN(train_x, train_y, pred_x))
+    '''
+
+    # real data
+    from datetime import datetime
+    from get_stock_data import get_formated_daily_prices
+    print('_' * 80)
+    print('RUNNING REAL DATA\n')
+
+    # fetch data
+    whole_data = get_formated_daily_prices('GOOG')
+    print("dataset size = ", len(whole_data))
+    cur_timestamp = datetime.now().timestamp()
+    SECONDS_OF_ONE_DAY = 86400
+    predict_size = 10
+    train_x = []
+    train_y = []
+    pred_x = np.array(
+        [cur_timestamp + i * SECONDS_OF_ONE_DAY for i in range(predict_size)]
+    ).reshape(-1, 1)  # timestamps of the following 'predict_size' days
+    for row in whole_data:
+        train_x.append(row[0])
+        train_y.append(row[1])
+    train_x = np.array(train_x).reshape(-1, 1)
+    train_y = np.array(train_y).reshape(-1, 1)
+
+    #print(train_x)
+    #print(pred_x)
+
+    # predict
+    print("\nBAYES:")
+    bayes_ans = Predictor.bayes(train_x, train_y, pred_x)
+    print(bayes_ans)
+
+    print("\nSVR:")
+    SVR_ans = Predictor.SVR(train_x, train_y, pred_x)
+    print(SVR_ans)
+
+    print("\nDNN:")
+    DNN_ans = Predictor.DNN(train_x, train_y, pred_x)
+    print(DNN_ans)
+
+    # draw graph
+    import matplotlib.pyplot as plt
+    plt.figure()
+    plt.style.use("ggplot")
+    plt.xlabel("Time")
+    plt.ylabel("Price")
+
+    plt.plot(train_x, train_y, color="black", label="history")
+    plt.plot(pred_x, bayes_ans, color="blue", label="Bayes")
+    plt.plot(pred_x, SVR_ans, color="red", label="SVR")
+    plt.plot(pred_x, DNN_ans, color="green", label="DNN")
+
+    plt.show()
+
+
+
 
 
 
