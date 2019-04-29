@@ -53,6 +53,8 @@ class Indicator:
 class AlphaVantageIndicators:
     '''
     enables alpha_vantage for indicator calculation
+    input eg.: "GOOG"
+    output type: json str
     '''
 
     @staticmethod
@@ -60,6 +62,20 @@ class AlphaVantageIndicators:
         ti = TechIndicators(key=Env.alpha_vantage_api_key, output_format='pandas')
         data, meta_data = ti.get_roc(symbol=stock_name, interval='1min', time_period=60, series_type='close')
         #data.to_csv(stock_name + ' - ROC indicator.csv', index=True, sep=',')
+        return data.to_json(orient='split')
+
+    @staticmethod
+    def OBV(stock_name):
+        ti = TechIndicators(key=Env.alpha_vantage_api_key, output_format='pandas')
+        data, meta_data = ti.get_obv(symbol=stock_name, interval='1min', time_period=60, series_type='close')
+        # data.to_csv(stock_name + ' - OBV indicator.csv', index=True, sep=',')
+        return data.to_json(orient='split')
+
+    @staticmethod
+    def MACD(stock_name):
+        ti = TechIndicators(key=Env.alpha_vantage_api_key, output_format='pandas')
+        data, meta_data = ti.get_macd(symbol=stock_name, interval='1min', time_period=60, series_type='close')
+        # data.to_csv(stock_name + ' - MACD indicator.csv', index=True, sep=',')
         return data.to_json(orient='split')
 
 if __name__ == "__main__":
