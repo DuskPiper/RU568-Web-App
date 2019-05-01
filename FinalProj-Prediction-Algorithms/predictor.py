@@ -100,7 +100,7 @@ class Predictor:
     @staticmethod
     def SVR(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
         '''predicts with SVM based Regression (sklearn.svm.SVR())'''
-        '''DEV NOTE: 数据少时准确性(相对)好，数据多时(>200)效率极低、准确性一般'''
+        '''DEV NOTE: 数据多时(>200)效率极低'''
 
         train_y = np.ravel(train_y, order='C')  # fix input shape
 
@@ -129,7 +129,7 @@ class Predictor:
     @staticmethod
     def DNN(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
         '''predicts with TensorFlow based Neural Network (DNNRegressor.Estimator())'''
-        '''DEV NOTE: 效率受数据量影响较小，准确性一直好'''
+        '''DEV NOTE: 效率受数据量影响较小，准确性&数据量呈正相关'''
 
         train_y = np.ravel(train_y, order='C')  # fix input shape
 
@@ -253,7 +253,7 @@ if __name__ == "__main__":
     print("dataset size = ", len(whole_data))
     cur_timestamp = datetime.now().timestamp()
     SECONDS_OF_ONE_DAY = 86400
-    predict_size = 10
+    predict_size = 20
     train_x = []
     train_y = []
     pred_x = np.array(
