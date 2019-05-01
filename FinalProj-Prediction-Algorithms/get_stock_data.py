@@ -1,4 +1,8 @@
-# -*- coding:utf-8 -*-
+'''
+@author: Ruiyu Zhang
+@create: 2019.04.22
+@intro.: Fetches stocks data (瞎糊的)
+'''
 
 import json
 from typing import List, Union
@@ -13,97 +17,22 @@ from env import Env
 
 #from utils import Utils
 
-
-class StocksData(object):
+def get_formated_daily_prices(symbol: Union[str, List[str]], apikey=Env.alpha_vantage_api_key):
     URL = 'https://www.alphavantage.co/query'
-    apikey = ''
-
-    def __init__(self, apikey):
-    	self.apikey = apikey
-
-    def getDailyData(self, symbol: Union[str, List[str]]):
-        if not symbol: raise ValueError
-        if isinstance(symbol, str): symbol = [symbol, ]
-
-        results = []
-        for s in symbol:
-            res = requests.get(self.URL,
-                               params={
-                                   'function': 'TIME_SERIES_DAILY',
-                                   'symbol': s,
-                                   'outputsize': 'compact',  # full, compact
-                                   'apikey': self.apikey # Utils.get_env('ALPHAVANTAG_API_KEY')
-                               })
-
-            j = res.json()  # type: dict
-            if 'Time Series (Daily)' in j:
-                tz = j['Meta Data']['5. Time Zone']
-                for d, info in j['Time Series (Daily)'].items():
-                    tmpDict = {'timestamp': arrow.get(d).datetime,
-                                'symbol': s,
-                                'open': Decimal128(info['1. open']),
-                                'high': Decimal128(info['2. high']),
-                                'low': Decimal128(info['3. low']),
-                                'close': Decimal128(info['4. close'])}
-                    try:
-                        tmpDict['volume'] = Int64(info['5. volume'])
-                    except (BSONError, ValueError):
-                        tmpDict['volume'] = Int64(0)
-                    results.append(tmpDict)
-            else:
-                print(arrow.utcnow().isoformat())
-                print(json.dumps(j, indent=1))
-        return results
-
-    def getRealtimePrice(self, symbol: Union[str, List[str]] = None):
-        if symbol is None:
-            return []
-        if isinstance(symbol, str):
-            symbol = [symbol, ]
-
-        res = requests.get(self.URL,
-                           params={
-                               'function': 'BATCH_STOCK_QUOTES',
-                               'symbols': ','.join(symbol),
-                                   'apikey': self.apikey # Utils.get_env('ALPHAVANTAG_API_KEY')
-                           })
-        j = res.json()  #type: dict
-        results = []
-        if 'Stock Quotes' in j:
-            tz = j['Meta Data']['3. Time Zone']
-
-            for info in j['Stock Quotes']:
-                tmpDict = {'timestamp': arrow.get(info['4. timestamp']).replace(tzinfo=tz).datetime,
-                            'symbol': info['1. symbol'],
-                            'price': Decimal128(info['2. price'])}
-                try:
-                    tmpDict['volume'] = Int64(info['3. volume'])
-                except (BSONError, ValueError):
-                    tmpDict['volume'] = Int64(0)
-                results.append(tmpDict)
-        else:
-            print(arrow.utcnow().isoformat())
-            print(json.dumps(j, indent=1))
-        return results
-
-
-def get_formated_daily_prices(symbol, apikey=Env.alpha_vantage_api_key):
-    URL = 'https://www.alphavantage.co/query'
-    if not symbol: raise ValueError
-    if isinstance(symbol, str): symbol = [symbol, ]
+    if not symbol:
+        return []
+    if isinstance(symbol, str):
+        symbol = [symbol, ]
 
     prices = []
-
     for s in symbol:
-        res = requests.get(URL,
-                           params={
-                               'function': 'TIME_SERIES_DAILY',
-                               'symbol': s,
-                               'outputsize': 'compact',  # full, compact
-                               'apikey': apikey
-                           })
+        j = requests.get(URL, params={
+            'function': 'TIME_SERIES_DAILY',
+            'symbol': s,
+            'outputsize': 'compact',  # full, compact
+            'apikey': apikey
+        }).json()
 
-        j = res.json()  # type: dict
         if 'Time Series (Daily)' in j:
             tz = j['Meta Data']['5. Time Zone']
             for d, info in j['Time Series (Daily)'].items():
@@ -119,8 +48,43 @@ def get_formated_daily_prices(symbol, apikey=Env.alpha_vantage_api_key):
             print(json.dumps(j, indent=1))
     return prices
 
+def get_realtime_price(symbol: Union[str, List[str]], apikey=Env.alpha_vantage_api_key):
+    URL = 'https://www.alphavantage.co/query'
+    if not symbol:
+        return []
+    if isinstance(symbol, str):
+        symbol = [symbol, ]
 
-if __name__ == '__main__':
+    j = requests.get(URL, params={
+        'function': 'BATCH_STOCK_QUOTES',
+        'symbols': ','.join(symbol),
+        'apikey': apikey
+    }).json()
+
+    results = []
+    if 'Stock Quotes' in j:
+        tz = j['Meta Data']['3. Time Zone']
+    for info in j['Stock Quotes']:
+        price = {
+            'timestamp': arrow.get(info['4. timestamp']).replace(tzinfo=tz).datetime,
+            'symbol': info['1. symbol'],
+            'price': Decimal128(info['2. price'])
+        }
+        try:
+            price['volume'] = Int64(info['3. volume'])
+        except (BSONError, ValueError):
+            price['volume'] = Int64(0)
+
+        results.append(price)
+    else:
+        print(arrow.utcnow().isoformat())
+        print(json.dumps(j, indent=1))
+
+    return results
+
+
+
+if __name__ == "__main__":
     cirno = StocksData(Env.alpha_vantage_api_key)
     # print(cirno.getRealtimePrice('GOOG'))
     daily = cirno.getDailyData('GOOG')

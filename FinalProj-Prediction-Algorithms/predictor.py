@@ -55,7 +55,6 @@ class Predictor:
             LinearRegression()
         )
         pipe.fit(train_x, train_y)
-        print(best_deg)
         return pipe.predict(pred_x)
 
     @staticmethod
@@ -94,7 +93,6 @@ class Predictor:
             BayesianRidge()
         )
         pipe.fit(train_x, train_y)
-        print(best_deg)
         return pipe.predict(pred_x)
 
     @staticmethod
