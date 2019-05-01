@@ -108,7 +108,7 @@ class AlphaVantageIndicators:
 
         ti = TechIndicators(key=Env.alpha_vantage_api_key, output_format='pandas')
         data, meta_data = ti.get_macd(symbol=stock_name, interval='daily', series_type='close')
-        # data.to_csv(stock_name + '_MACD indicator.csv', index=True, sep=',')
+        #data.to_csv(stock_name + '_MACD indicator.csv', index=True, sep=',')
         return data.to_json(orient='split')
 
     @staticmethod
@@ -187,7 +187,7 @@ if __name__ == "__main__":
     #print(AlphaVantageIndicators.MACD("GOOG"))
     #print(AlphaVantageIndicators.stoch("GOOG"))
     #print(AlphaVantageIndicators.RSI("GOOG"))
-    print(AlphaVantageIndicators.CCI("GOOG"))
+    print(AlphaVantageIndicators.MACD("GOOG"))
     #AlphaVantageIndicators.save_all_indicators("GOOG")
 
 

@@ -7,11 +7,11 @@ import os
 from random import sample, randint, uniform
 import numpy as np
 import tensorflow as tf
-from sklearn.linear_model import BayesianRidge
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVR
+from sklearn.linear_model import BayesianRidge, LinearRegression
 
 class Predictor:
     '''
@@ -20,9 +20,8 @@ class Predictor:
     '''
 
     @staticmethod
-    def bayes(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
-        '''predicts with Bayesian Regression (sklearn.linear_model.BayesianRidge()'''
-        '''DEV NOTE: 效率几乎不受数据量影响，数据少(<100)时准确性极差'''
+    def bayesian_linear(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
+        '''predicts with Bayesian Linear Regression (sklearn.linear_model.LinearRegression()'''
 
         train_y = np.ravel(train_y, order='C')  # fix input shape
 
@@ -30,30 +29,72 @@ class Predictor:
             '''constructs pipeline under Bayesian model and evaluates score.'''
             pipe = make_pipeline(
                 StandardScaler(), 
-                PolynomialFeatures(feature_deg),  # featire_deg: 多项式的度
-                BayesianRidge(normalize=False)
+                PolynomialFeatures(feature_deg),  # feature_deg: 多项式的度
+                LinearRegression()
                 )
             pipe.fit(train_x, train_y)
             return pipe.score(train_x, train_y)
 
         record = -1  # best score
         best_deg = -1  # degree to gain best score
-        deg_range = 100  # degree range for testing
+        deg_range = 5  # degree range for testing
 
+        """ # Not needed, best_deg always= deg_range
         # find the best degree for PolynomialFeatures
         for deg in range(1, deg_range):
             score = calculate_score(deg, train_x, train_y)
             if score > record:
                 record = score
                 best_deg = deg
-
+        """
+        best_deg = deg_range - 1
         # build model, train with best deg, and predict
         pipe = make_pipeline(
             StandardScaler(),
             PolynomialFeatures(best_deg),
-            BayesianRidge(normalize=False)
+            LinearRegression()
         )
         pipe.fit(train_x, train_y)
+        print(best_deg)
+        return pipe.predict(pred_x)
+
+    @staticmethod
+    def bayesian_ridge(train_x: np.ndarray, train_y: np.ndarray, pred_x: np.ndarray):
+        '''predicts with Bayesian Regression (sklearn.linear_model.BayesianRidge()'''
+
+        train_y = np.ravel(train_y, order='C')  # fix input shape
+
+        def calculate_score(feature_deg, train_x, train_y):
+            '''constructs pipeline under Bayesian model and evaluates score.'''
+            pipe = make_pipeline(
+                StandardScaler(),
+                PolynomialFeatures(feature_deg),  # feature_deg: 多项式的度
+                BayesianRidge()
+                )
+            pipe.fit(train_x, train_y)
+            return pipe.score(train_x, train_y)
+
+        record = -1  # best score
+        best_deg = -1  # degree to gain best score
+        deg_range = 5  # degree range for testing
+
+        """ # Not needed, best_deg always= deg_range
+        # find the best degree for PolynomialFeatures
+        for deg in range(1, deg_range):
+            score = calculate_score(deg, train_x, train_y)
+            if score > record:
+                record = score
+                best_deg = deg
+        """
+        best_deg = deg_range - 1
+        # build model, train with best deg, and predict
+        pipe = make_pipeline(
+            StandardScaler(),
+            PolynomialFeatures(best_deg),
+            BayesianRidge()
+        )
+        pipe.fit(train_x, train_y)
+        print(best_deg)
         return pipe.predict(pred_x)
 
     @staticmethod
@@ -192,7 +233,7 @@ if __name__ == "__main__":
 
     # predict
     print("\nBAYES:")
-    print(Predictor.bayes(train_x, train_y, pred_x))
+    print(Predictor.bayesian(train_x, train_y, pred_x))
 
     print("\nSVR:")
     print(Predictor.SVR(train_x, train_y, pred_x))
@@ -228,9 +269,13 @@ if __name__ == "__main__":
     #print(pred_x)
 
     # predict
-    print("\nBAYES:")
-    bayes_ans = Predictor.bayes(train_x, train_y, pred_x)
-    print(bayes_ans)
+    print("\nBAYESIAN LINEAR:")
+    bayes_l_ans = Predictor.bayesian_linear(train_x, train_y, pred_x)
+    print(bayes_l_ans)
+
+    print("\nBAYESIAN RIDGE:")
+    bayes_r_ans = Predictor.bayesian_ridge(train_x, train_y, pred_x)
+    print(bayes_r_ans)
 
     print("\nSVR:")
     SVR_ans = Predictor.SVR(train_x, train_y, pred_x)
@@ -248,7 +293,8 @@ if __name__ == "__main__":
     plt.ylabel("Price")
 
     plt.plot(train_x, train_y, color="black", label="history")
-    plt.plot(pred_x, bayes_ans, color="blue", label="Bayes")
+    plt.plot(pred_x, bayes_l_ans, color="blue", label="Bayesian Linear")
+    plt.plot(pred_x, bayes_r_ans, color="yellow", label="Bayesian Ridge")
     plt.plot(pred_x, SVR_ans, color="red", label="SVR")
     plt.plot(pred_x, DNN_ans, color="green", label="DNN")
 
