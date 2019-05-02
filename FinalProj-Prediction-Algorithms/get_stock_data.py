@@ -85,8 +85,4 @@ def get_realtime_price(symbol: Union[str, List[str]], apikey=Env.alpha_vantage_a
 
 
 if __name__ == "__main__":
-    cirno = StocksData(Env.alpha_vantage_api_key)
-    # print(cirno.getRealtimePrice('GOOG'))
-    daily = cirno.getDailyData('GOOG')
-    for row in daily:
-        print(row)
+    pass
