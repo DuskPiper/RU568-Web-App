@@ -102,7 +102,6 @@ def indicator_vr():
 
     return jsonify(res)
 
-
 @app.route('/api/v0.1.0/ema')
 @jsonp
 def indicator_ema():
@@ -139,18 +138,19 @@ def indicator_ema():
             'symbol': request.args.get('symbol', 'ERROR'),
             'indicator': 'EMA',
             'timestamp': arrow.get(request.args['timestamp']).isoformat(),
-            'data': EMA.value(
-                vals=np.array(r['close'][:-1])
+            'data': EMA.value(vals=np.array(r['close'][:-1])
             )
         }
     }
-
     return jsonify(res)
 
 
 @app.route('/api/v0.1.0/macd')
 @jsonp
 def indicator_macd():
+
+    from prediction.prediction_engine.indicator import AlphaVantageIndicators
+
     check_result = checkParameters(
         args=request.args,
         parametersList=['timestamp', 'symbol'],
@@ -232,28 +232,30 @@ def predict():
 
     predict_time = arrow.get(request.args['timestamp']).timestamp
 
-    bayes = pool.apply_async(Bayes.predict, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
+    #bayes = pool.apply_async(Bayes.predict, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
     #bayes = Bayes.predict(time, price, np.array(predict_time).reshape(-1, 1))
-    svr = pool.apply_async(SupportVectorRegression.predict, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
+    #svr = pool.apply_async(SupportVectorRegression.predict, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
     # svr = SupportVectorRegression.predict(time, price, np.array(predict_time).reshape(-1, 1))
-    dnn = pool.apply_async(DNN.predict, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
+    #dnn = pool.apply_async(DNN.predict, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
     # dnn = DNN.predict(time, price, np.array(predict_time).reshape(-1, 1))
 
-    #bayes = pool.apply_async(Predictor.bayesian_linear, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
-    #svr = pool.apply_async(Predictor.SVR, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
-    #dnn = pool.apply_async(Predictor.DNN, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
-    # dnn = svr[0]
+    bayes = pool.apply_async(Predictor.bayesian_linear, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
+    svr = pool.apply_async(Predictor.SVR, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
+    dnn = pool.apply_async(Predictor.DNN, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
+
+    ans = (bayes[0] + svr[0]) / 2 if bayes[0] < 0 else (bayes[0] + svr[0] + dnn[0]) / 3
+    bayes[0] = max(bayes[0], 0)
 
     res = {
         'type': 'result',
         'time': arrow.utcnow().isoformat(),
         'result': {
             'symbol': request.args.get('symbol'),
-            'predictPrice': (bayes[0] + svr[0] + dnn) / 3,
+            'predictPrice': ans,
             'predictor': [
                 {'name': 'bayes', 'price': bayes[0]},
                 {'name': 'Support Vector Regression', 'price': svr[0]},
-                {'name': 'Deep Neural Network', 'price': dnn}
+                {'name': 'Deep Neural Network', 'price': dnn[0]}
             ],
             'note': 'ONLY FOR TESTING!',
             'timestamp': arrow.get(request.args['timestamp']).isoformat()

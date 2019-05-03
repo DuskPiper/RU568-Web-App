@@ -272,8 +272,6 @@ function updateIndicator() {
             // console.log(result['result']['data']);
         });
     })
-
-
 }
 
 function selectSymbol(symbol, period = null) {

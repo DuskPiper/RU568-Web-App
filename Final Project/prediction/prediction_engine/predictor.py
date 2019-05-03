@@ -33,7 +33,7 @@ class Predictor:
 
         record = -1  # best score
         best_deg = -1  # degree to gain best score
-        deg_range = 5  # degree range for testing
+        deg_range = 3  # degree range for testing
 
         """ # Not needed, best_deg always= deg_range
         # find the best degree for PolynomialFeatures
@@ -74,7 +74,7 @@ class Predictor:
 
         record = -1  # best score
         best_deg = -1  # degree to gain best score
-        deg_range = 5  # degree range for testing
+        deg_range = 3  # degree range for testing
 
         """ # Not needed, best_deg always= deg_range
         # find the best degree for PolynomialFeatures
