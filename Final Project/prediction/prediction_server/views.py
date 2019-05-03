@@ -238,7 +238,7 @@ def predict():
     #dnn = pool.apply_async(DNN.predict, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
     # dnn = DNN.predict(time, price, np.array(predict_time).reshape(-1, 1))
 
-    bayes = pool.apply_async(Predictor.bayesian_linear, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
+    bayes = pool.apply_async(Predictor.bayesian_ridge, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
     svr = pool.apply_async(Predictor.SVR, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
     dnn = pool.apply_async(Predictor.DNN, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
 
