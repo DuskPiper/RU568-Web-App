@@ -2,13 +2,13 @@ import arrow
 import numpy as np
 from flask import request, jsonify, render_template
 
-from prediction.prediction_server import app, pool
-from prediction.prediction_server.jsonp import jsonp
-from prediction.prediction_server.util import checkParameters, getDailyData, \
+from rocket.server import app, pool
+from rocket.server.jsonp import jsonp
+from rocket.server.util import checkParameters, getDailyData, \
     checkSymbol, getRealtimeData, checkDate, checkTimestamp
-from prediction.prediction_engine.predictor import Predictor
-import prediction.prediction_engine.indicator_util as idut
-from prediction.prediction_engine.indicator import Indicator
+from rocket.engine.predictor import Predictor
+import rocket.engine.indicator_util as idut
+from rocket.engine.indicator import Indicator
 
 
 
@@ -143,8 +143,6 @@ def indicator_ema():
 @app.route('/api/v0.1.0/macd')
 @jsonp
 def indicator_macd():
-
-    from prediction.prediction_engine.indicator import AlphaVantageIndicators
 
     check_result = checkParameters(
         args=request.args,

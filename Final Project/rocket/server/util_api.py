@@ -1,7 +1,7 @@
 import arrow
 from pymongo import DESCENDING
 
-from prediction.prediction_server import realtime, daily, comment
+from rocket.server import realtime, daily, comment
 
 
 def get_recent_price(symbol: str, n: int = 30):

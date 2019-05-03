@@ -8,7 +8,7 @@ import numpy as np
 from alpha_vantage.techindicators import TechIndicators
 import json
 #from env import Env
-from prediction.prediction_engine.env import Env
+from rocket.engine.env import Env
 from time import sleep
 
 class Indicator: # deprecated

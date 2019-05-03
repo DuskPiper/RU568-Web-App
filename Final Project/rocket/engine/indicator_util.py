@@ -1,5 +1,5 @@
 from alpha_vantage.techindicators import TechIndicators
-from prediction.prediction_engine.env import Env
+from rocket.engine.env import Env
 
 # all_symbols = ["AABA", "AMZN", "BAC", "C", "GOOG", "JPM", "MSFT", "NFLX", "TWTR"]
 

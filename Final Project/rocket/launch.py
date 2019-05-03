@@ -1,4 +1,4 @@
-from prediction.prediction_server import app
+from rocket.server import app
 
 if __name__ == '__main__':
     # app.run()

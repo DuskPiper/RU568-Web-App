@@ -1,4 +1,3 @@
-import os
 from multiprocessing import Pool, cpu_count
 
 from flask import Flask
@@ -24,6 +23,5 @@ comment = client['stockapp']['comment']
 from .view import *
 from .view_api import *
 
-import prediction.prediction_engine.indicator_util as ut
-ut.indicator_db_init()
-
+import rocket.engine.indicator_util as idut
+idut.indicator_db_init()

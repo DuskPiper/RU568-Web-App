@@ -5,15 +5,10 @@ macd_l = [];
 vr_l = [];
 
 $(document).ready(function () {
-
     loadSymbols();
-
     initKChart();
-
     updateChart();
-
     updateIndicator_foo();
-
 });
 
 
@@ -21,7 +16,6 @@ $('#addnewcommentform').submit(function (event) {
     event.preventDefault();
     let f = $('#addnewcommentform');
     $.post(api_prefix + 'stockresource/comment', f.serialize()).done(function (data) {
-
         $.getJSON(api_prefix + 'stockresource/comment/' + CURRENT_SYMBOL, function (result) {
             redrawComment(result);
         });
@@ -34,8 +28,6 @@ $('#addnewcommentform').submit(function (event) {
 
 
 function initKChart() {
-
-
     table = anychart.data.table();
 
     mapping = table.mapAs();
@@ -85,7 +77,6 @@ function initKChart() {
     vr = chart.plot(1).line(vr_mapping);
     vr.name('VR');
 
-
     chart.plot(2).height('20%');
     column = chart.plot(2).column(mapping2);
     column.name('Volume');
@@ -97,10 +88,7 @@ function initKChart() {
     // candlestick.risingHatchFill('#00ff00');
     candlestick.risingFill('#00ff00');
 
-
     realtime_line = realtime_chart.plot(0).line(realtime_mapping);
-
-// realtime_container
 
     realtime_p1 = realtime_chart.plot(1);
     realtime_p1.height('20%');
@@ -205,10 +193,6 @@ function changePeriod(period) {
     selectSymbol(CURRENT_SYMBOL, period);
 }
 
-// function selectSymbol(symbol) {
-//
-// }
-
 function updateIndicator_foo() {
     ema_table.addData(ema_l);
     ema_l = [];
@@ -255,21 +239,14 @@ function updateIndicator() {
     vr_l = [];
 
     $.each(stock_data, function (idx, item) {
-        // console.log(item);
         $.getJSON('/api/v0.1.0/ema?symbol=' + CURRENT_SYMBOL + '&timestamp=' + item[0], function (result) {
-            // ema_table.addData([[item[0], result['result']['data']]]);
             ema_l.push([item[0], result['result']['data']]);
-            // console.log(result['result']['data']);
         });
         $.getJSON('/api/v0.1.0/macd?symbol=' + CURRENT_SYMBOL + '&timestamp=' + item[0], function (result) {
-            // ema_table.addData([[item[0], result['result']['data']]]);
             macd_l.push([item[0], result['result']['data']]);
-            // console.log(result['result']['data']);
         });
         $.getJSON('/api/v0.1.0/vr?symbol=' + CURRENT_SYMBOL + '&timestamp=' + item[0], function (result) {
-            // ema_table.addData([[item[0], result['result']['data']]]);
             vr_l.push([item[0], result['result']['data']]);
-            // console.log(result['result']['data']);
         });
     })
 }
@@ -292,14 +269,10 @@ function selectSymbol(symbol, period = null) {
     } else
         period = CURRENT_PERIOD;
 
-
-//    update chart
     table.remove();
     realtime.remove();
     candlestick.name(symbol);
     realtime_line.name(symbol);
-
-    // load data
 
     $.getJSON('api/v0.1.0/getMax/' + symbol, function (result) {
         $('#High').text(result.toFixed(2));
@@ -404,7 +377,6 @@ function getAdvice(VRlast, EMAlast, MACDlast) {
             sell++;
     }
 
-    //console.log(buy + "," + hold + "," + sell);
     if (buy >= 2)
         return "buy";
     else if (hold >= 2)
@@ -413,8 +385,6 @@ function getAdvice(VRlast, EMAlast, MACDlast) {
         return "sell";
     else
         return "hold";
-
-
 }
 
 function helpAdviceVR(Test, high, low) {

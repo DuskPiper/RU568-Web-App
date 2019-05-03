@@ -4,8 +4,8 @@ import arrow
 from pymongo import DESCENDING
 from werkzeug.datastructures import ImmutableMultiDict
 
-from prediction.prediction_server import daily, realtime
-from prediction.prediction_server import error_code
+from rocket.server import daily, realtime
+from rocket.server import error_code
 
 
 def checkDate(symbol: str, timestamp: str):

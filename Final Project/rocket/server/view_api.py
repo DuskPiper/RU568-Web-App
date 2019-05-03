@@ -1,7 +1,7 @@
 from flask import jsonify, render_template, request
 
-from prediction.prediction_server import app
-from prediction.prediction_server import util_api
+from rocket.server import app
+from rocket.server import util_api
 
 api_prefix = '/api/v0.1.0/'
 
