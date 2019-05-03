@@ -138,8 +138,7 @@ def indicator_ema():
             'symbol': request.args.get('symbol', 'ERROR'),
             'indicator': 'EMA',
             'timestamp': arrow.get(request.args['timestamp']).isoformat(),
-            'data': EMA.value(vals=np.array(r['close'][:-1])
-            )
+            'data': EMA.value(vals=np.array(r['close'][:-1]))
         }
     }
     return jsonify(res)
