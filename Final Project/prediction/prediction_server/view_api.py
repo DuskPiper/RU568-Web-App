@@ -1,7 +1,7 @@
 from flask import jsonify, render_template, request
 
 from prediction.prediction_server import app
-from prediction.prediction_server import model_emergency
+from prediction.prediction_server import util_api
 
 api_prefix = '/api/v0.1.0/'
 
@@ -13,17 +13,17 @@ def stock_content():
 
 @app.route(api_prefix + 'getAllSymbols')
 def get_all_symbol():
-    return jsonify(model_emergency.get_all_symbol())
+    return jsonify(util_api.get_all_symbol())
 
 
 @app.route(api_prefix + 'getLeastPrice/<string:symbol>')
 def get_least_price(symbol: str):
-    return jsonify(float(model_emergency.get_least_price(symbol).to_decimal()))
+    return jsonify(float(util_api.get_least_price(symbol).to_decimal()))
 
 
 @app.route(api_prefix + 'getRecentPrice/<string:symbol>/<int:n>')
 def get_recent_price(symbol, n):
-    res = model_emergency.get_recent_price(symbol, n)
+    res = util_api.get_recent_price(symbol, n)
 
     ret = []
     for row in res:
@@ -35,7 +35,7 @@ def get_recent_price(symbol, n):
 
 @app.route(api_prefix + 'getRealtimePrice/<string:symbol>/<int:n>')
 def get_realtime_price(symbol, n):
-    res = model_emergency.get_realtime_price(symbol, n)
+    res = util_api.get_realtime_price(symbol, n)
     ret = []
     for row in res:
         ret.append([row['timestamp'].isoformat(), float(row['price'].to_decimal()), row['volume']])
@@ -45,31 +45,31 @@ def get_realtime_price(symbol, n):
 
 @app.route(api_prefix + 'getMax/<string:symbol>')
 def get_max(symbol: str):
-    return jsonify(float(model_emergency.get_max(symbol)))
+    return jsonify(float(util_api.get_max(symbol)))
 
 
 @app.route(api_prefix + 'getMin/<string:symbol>')
 def get_min(symbol: str):
-    return jsonify(float(model_emergency.get_min(symbol)))
+    return jsonify(float(util_api.get_min(symbol)))
 
 
 @app.route(api_prefix + 'getAvg/<string:symbol>')
 def get_avg(symbol: str):
-    return jsonify(float(model_emergency.get_avg(symbol)))
+    return jsonify(float(util_api.get_avg(symbol)))
 
 
 @app.route(api_prefix + 'getLowerAvg/<string:symbol>')
 def get_lower_avg(symbol: str):
-    return jsonify(model_emergency.get_lower_avg(symbol))
+    return jsonify(util_api.get_lower_avg(symbol))
 
 
 @app.route(api_prefix + 'stockresource/comment/<string:symbol>', methods=['GET', ])
 def get_commit(symbol: str):
-    return jsonify(model_emergency.get_comment(symbol))
+    return jsonify(util_api.get_comment(symbol))
 
 
 @app.route(api_prefix + 'stockresource/comment', methods=['POST', ])
 def add_commit():
-    model_emergency.add_comment(request.form['symbol'], request.form['comment'], request.form['timestamp'],
-                                request.form['username'])
+    util_api.add_comment(request.form['symbol'], request.form['comment'], request.form['timestamp'],
+                         request.form['username'])
     return ''

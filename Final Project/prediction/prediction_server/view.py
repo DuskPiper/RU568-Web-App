@@ -10,7 +10,7 @@ from prediction.prediction_engine.macd import MACD
 from prediction.prediction_engine.vr import VolatilityRatio
 from prediction.prediction_server import app, pool
 from prediction.prediction_server.jsonp import jsonp
-from prediction.prediction_server.models import checkParameters, getDailyData, \
+from prediction.prediction_server.util import checkParameters, getDailyData, \
     checkSymbol, getRealtimeData, checkDate, checkTimestamp
 from prediction.prediction_engine.predictor import Predictor
 

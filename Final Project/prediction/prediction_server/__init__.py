@@ -21,5 +21,5 @@ daily = client['stockapp']['daily']
 realtime = client['stockapp']['realtime']
 comment = client['stockapp']['comment']
 
-from .views import *
-from .view_emergency import *
+from .view import *
+from .view_api import *
