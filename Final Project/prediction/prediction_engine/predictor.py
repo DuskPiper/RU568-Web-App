@@ -112,7 +112,7 @@ class Predictor:
             pipe,
             param_grid={
                 'svr__gamma': np.logspace(-2, 2, 5),
-                'svr__C': [1e0, 1e1, 1e2, 1e3]
+                'svr__C': [1e0, 1e1, 1e2]#, 1e3]
             },
             n_jobs=os.cpu_count(),
             cv=(train_x.shape[0] // 10),
@@ -130,10 +130,10 @@ class Predictor:
 
         train_y = np.ravel(train_y, order='C')  # fix input shape
 
-        STEPS = 1000  # training steps
+        STEPS = 800  # training steps
         PRICE_NORM_FACTOR = 10  # for normalization
         SECONDS_OF_ONE_DAY = 86400
-        SHUFFLE_TIMES = 500  # shuffle multiple times (likely > dataset size) to ensure adequate mixture
+        SHUFFLE_TIMES = 100  # shuffle multiple times (likely > dataset size) to ensure adequate mixture
         DEBUG = 0  # debug mode flag
 
         if not DEBUG:  # mute various warnings

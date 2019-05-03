@@ -217,9 +217,6 @@ def predict():
     if check_result:
         return jsonify(check_result)
 
-    # request.args.get('timestamp')
-
-    # ------------------------------------
     if request.args['term'] == 'short':
         r = getDailyData(request.args['symbol'], request.args['timestamp'], 50)
         time = np.array(r['timestamp']).reshape(-1, 1)
@@ -234,16 +231,23 @@ def predict():
     #bayes = pool.apply_async(Bayes.predict, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
     #bayes = Bayes.predict(time, price, np.array(predict_time).reshape(-1, 1))
     #svr = pool.apply_async(SupportVectorRegression.predict, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
-    # svr = SupportVectorRegression.predict(time, price, np.array(predict_time).reshape(-1, 1))
+    #svr = SupportVectorRegression.predict(time, price, np.array(predict_time).reshape(-1, 1))
     #dnn = pool.apply_async(DNN.predict, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
-    # dnn = DNN.predict(time, price, np.array(predict_time).reshape(-1, 1))
+    #dnn = DNN.predict(time, price, np.array(predict_time).reshape(-1, 1))
 
     bayes = pool.apply_async(Predictor.bayesian_ridge, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
     svr = pool.apply_async(Predictor.SVR, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
     dnn = pool.apply_async(Predictor.DNN, [time, price, np.array(predict_time).reshape(-1, 1)]).get()
 
-    ans = (bayes[0] + svr[0]) / 2 if bayes[0] < 0 else (bayes[0] + svr[0] + dnn[0]) / 3
-    bayes[0] = max(bayes[0], 0)
+    #ans = (bayes[0] + svr[0]) / 2 if bayes[0] < 0 else (bayes[0] + svr[0] + dnn[0]) / 3
+
+    bayes[0] = (svr[0] + dnn[0]) if bayes[0] < 0 else bayes[0]
+    if request.args['term'] == 'short':
+        ans = 0.1 * bayes[0] + 0.7 * svr[0] + 0.2 * dnn[0]
+    elif request.args['term'] == 'long':
+        ans = 0.1 * bayes[0] + 0.2 * svr[0] + 0.7 * dnn[0]
+    else:
+        ans = 0
 
     res = {
         'type': 'result',
