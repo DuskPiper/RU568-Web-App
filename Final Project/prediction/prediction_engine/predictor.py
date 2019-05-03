@@ -130,7 +130,7 @@ class Predictor:
 
         train_y = np.ravel(train_y, order='C')  # fix input shape
 
-        STEPS = 1500  # training steps
+        STEPS = 1000  # training steps
         PRICE_NORM_FACTOR = 10  # for normalization
         SECONDS_OF_ONE_DAY = 86400
         SHUFFLE_TIMES = 500  # shuffle multiple times (likely > dataset size) to ensure adequate mixture

@@ -2,11 +2,11 @@ import arrow
 import numpy as np
 from flask import request, jsonify, render_template
 
-from prediction.prediction_engine.bayes import Bayes
-from prediction.prediction_engine.dnn import DNN
+#from prediction.prediction_engine.bayes import Bayes
+#from prediction.prediction_engine.dnn import DNN
 from prediction.prediction_engine.ema import EMA
 from prediction.prediction_engine.macd import MACD
-from prediction.prediction_engine.svr_zhu import SupportVectorRegression
+#from prediction.prediction_engine.svr_zhu import SupportVectorRegression
 from prediction.prediction_engine.vr import VolatilityRatio
 from prediction.prediction_server import app, pool
 from prediction.prediction_server.jsonp import jsonp
