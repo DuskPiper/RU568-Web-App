@@ -382,32 +382,29 @@ function foo() {
 function getAdvice(VRlast, EMAlast, MACDlast) {
     const VRhigh = 160;//高于卖出
     const VRlow = 70;//低于买入
-
     const EMAhigh = 0;
     const EMAlow = 1;
-
     const MACDhigh = 0;
     const MACDlow = 0;
+
     let resultArray = [];
     resultArray[0] = helpAdviceVR(VRlast, VRhigh, VRlow);
     resultArray[1] = helpAdviceEMA(EMAlast, EMAhigh, EMAlow);
     resultArray[2] = helpAdviceMACD(MACDlast, MACDhigh, MACDlow);
 
-    console.log("resultArray: " + resultArray);
-
     let buy = 0;
     let hold = 0;
     let sell = 0;
-    for (let x = 0; x < 3; x++) {
-        // console.log(resultArray[x])
-        if (resultArray[x] === "1")
+    for (let res of resultArray) {
+        if (res === "1")
             buy++;
-        else if (resultArray[x] === "0")
+        else if (res === "0")
             hold++;
-        else if (resultArray[x] === "-1")
+        else if (res === "-1")
             sell++;
     }
-    console.log(buy + "," + hold + "," + sell);
+
+    //console.log(buy + "," + hold + "," + sell);
     if (buy >= 2)
         return "buy";
     else if (hold >= 2)
@@ -430,11 +427,7 @@ function helpAdviceVR(Test, high, low) {
 }
 
 function helpAdviceEMA(Test, high, low) {
-    Test = lastPrice - Test;
-    if (Test >= 0)
-        return "1";
-    else
-        return "-1";
+    return (lastPrice >= Test) ? "1" : "-1";
 }
 
 function helpAdviceMACD(Test, high, low) {
@@ -451,10 +444,8 @@ function redrawComment(newData) {
     document.getElementById('comments').innerHTML = "";
     for (let i = 0; i < commentList.length; i++) {
         const current = document.createElement("div");
-        //console.log(current)
         const h4 = document.createElement("h4");
         h4.innerText = commentList[i]["username"] + " @ " + commentList[i]["timestamp"] + " said: ";
-        //console.log(h4)
         const p = document.createElement("p");
         p.innerText = commentList[i]["comment"];
         const hr = document.createElement("hr");
@@ -462,6 +453,5 @@ function redrawComment(newData) {
         current.appendChild(p);
         current.appendChild(hr);
         document.getElementById("comments").appendChild(current);
-
     }
 }

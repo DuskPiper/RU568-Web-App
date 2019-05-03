@@ -12,9 +12,6 @@ from prediction.prediction_engine.env import Env
 from time import sleep
 
 class Indicator: # deprecated
-    '''
-    LEGACY CODE, use AlphaVantageIndicators instead
-    '''
 
     @staticmethod
     def EMA(val: np.ndarray) -> np.float_:
@@ -58,6 +55,7 @@ class AlphaVantageIndicators:
     important: frequent requests may result in temp-ban of api
     input eg.: "GOOG"
     output type: json str
+    基本用不上
     '''
 
 
@@ -181,46 +179,16 @@ class AlphaVantageIndicators:
         d, _ = ti.get_roc(symbol=stock_name, interval='daily', time_period=60, series_type='close')
         d.to_csv(stock_name + '_ROC.csv', index=True, sep=',')
 
-class AlphaVantageIndicatorHelper(object):
-    ti = None
-    ema_data = None
-    roc_data = None
 
-    def __init__(self):
-        self.ti = TechIndicators(key=Env.alpha_vantage_api_key, output_format='pandas')
-
-    def get_ema_value(self, symbol, timestamp):
-        if not symbol or not timestamp:
-            return 0
-        if not self.ema_data:
-            self.ema_data, _ = self.ti.get_ema(symbol=stock_name, interval='daily', series_type='close')
-        return self.ema_data['EMA'].loc[timestamp[:10]]
-
-    def get_roc_value(self, symbol, timestamp):
-        if not symbol or not timestamp:
-            return 0
-        if not self.roc_data:
-            self.roc_data, _ = self.ti.get_ema(symbol=stock_name, interval='daily', series_type='close')
-        return self.roc_data['ROC'].loc[timestamp[:10]]
 
 if __name__ == "__main__":
     #print(AlphaVantageIndicators.ROC("GOOG"))
     #print(AlphaVantageIndicators.EMA("GOOG"))
     #print(AlphaVantageIndicators.OBV("GOOG"))
-    #print(AlphaVantageIndicators.MACD("GOOG"))
+    print(AlphaVantageIndicators.MACD("GOOG"))
     #print(AlphaVantageIndicators.stoch("GOOG"))
     #print(AlphaVantageIndicators.RSI("GOOG"))
     #print(AlphaVantageIndicators.MACD("GOOG"))
     #AlphaVantageIndicators.save_all_indicators("GOOG")
 
-    helper = AlphaVantageIndicatorHelper()
-
-    print(helper.get_ema_value("GOOG", "2019-04-01deac"))
-
-
-
-
     pass
-
-
-

@@ -23,3 +23,7 @@ comment = client['stockapp']['comment']
 
 from .view import *
 from .view_api import *
+
+import prediction.prediction_engine.indicator_util as ut
+ut.indicator_db_init()
+

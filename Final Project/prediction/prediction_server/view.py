@@ -2,17 +2,13 @@ import arrow
 import numpy as np
 from flask import request, jsonify, render_template
 
-#from prediction.prediction_engine.bayes import Bayes
-#from prediction.prediction_engine.dnn import DNN
-from prediction.prediction_engine.ema import EMA
-from prediction.prediction_engine.macd import MACD
-#from prediction.prediction_engine.svr_zhu import SupportVectorRegression
-from prediction.prediction_engine.vr import VolatilityRatio
 from prediction.prediction_server import app, pool
 from prediction.prediction_server.jsonp import jsonp
 from prediction.prediction_server.util import checkParameters, getDailyData, \
     checkSymbol, getRealtimeData, checkDate, checkTimestamp
 from prediction.prediction_engine.predictor import Predictor
+import prediction.prediction_engine.indicator_util as idut
+from prediction.prediction_engine.indicator import Indicator
 
 
 
@@ -92,7 +88,7 @@ def indicator_vr():
             'symbol': request.args.get('symbol', 'ERROR'),
             'indicator': 'VR',
             'timestamp': arrow.get(request.args['timestamp']).isoformat(),
-            'data': VolatilityRatio.indicator(
+            'data': Indicator.VR(
                 price=np.float_(r['close'][-1]),
                 historical_price=np.array(r['close'][:-1]),
                 historical_volume=np.array(r['volume'][:-1])
@@ -138,7 +134,7 @@ def indicator_ema():
             'symbol': request.args.get('symbol', 'ERROR'),
             'indicator': 'EMA',
             'timestamp': arrow.get(request.args['timestamp']).isoformat(),
-            'data': EMA.value(vals=np.array(r['close'][:-1]))
+            'data': idut.get_ema(request.args['symbol'], request.args['timestamp'])
         }
     }
     return jsonify(res)
@@ -185,10 +181,7 @@ def indicator_macd():
             'symbol': request.args.get('symbol', 'ERROR'),
             'indicator': 'MACD',
             'timestamp': arrow.get(request.args['timestamp']).isoformat(),
-            'data': MACD.value(
-                val12=np.array(r_first['close'][:-1]),
-                val26=np.array(r_second['close'][:-1])
-            )
+            'data': idut.get_macd(request.args['symbol'], request.args['timestamp'])
         }
     }
 

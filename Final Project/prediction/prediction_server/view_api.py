@@ -29,7 +29,6 @@ def get_recent_price(symbol, n):
     for row in res:
         ret.append([row['timestamp'].isoformat(), float(row['open'].to_decimal()), float(row['high'].to_decimal()),
                     float(row['low'].to_decimal()), float(row['close'].to_decimal()), row['volume']])
-
     return jsonify(ret)
 
 
